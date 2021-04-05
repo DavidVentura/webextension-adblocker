@@ -19,3 +19,13 @@ Docs:
 * https://docs.rust-embedded.org/book/interoperability/rust-with-c.html
 * https://doc.rust-lang.org/std/ffi/struct.CString.html
 * https://webkitgtk.org/reference/webkit2gtk/stable/WebKitURIRequest.html
+
+
+
+Ideas:
+
+* Make impl not disgusting (what's the correct lifetime for the global list?)
+* Reverse all strings and use a trie
+
+
+Should block all sub-domains from blocked domains, basically `doubleclick.net` should block `pubads.g.doubleclick.net`.
