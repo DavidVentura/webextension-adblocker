@@ -1,6 +1,8 @@
 #include <gtk/gtk.h>
 #include <webkit2/webkit-web-extension.h>
 
+extern bool is_ad(const char*); 
+
 static gboolean
 web_page_send_request (WebKitWebPage     *web_page,
                        WebKitURIRequest  *request,
@@ -15,11 +17,9 @@ web_page_send_request (WebKitWebPage     *web_page,
 
     g_print("Req uri: %s\n", request_uri);
     g_print("page uri: %s\n", page_uri);
-    if (strstr(request_uri, "css") != NULL) {
-        g_print("Blocked!! %s\n", request_uri);
-	return true;
-    }
-    return false;
+    bool was_ad = is_ad(request_uri);
+    g_print("was ad: %d\n", was_ad);
+    return was_ad;
 }
 
 static void
