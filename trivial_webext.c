@@ -2,6 +2,7 @@
 #include <webkit2/webkit-web-extension.h>
 
 extern bool is_ad(const char*); 
+extern void init_ad_list(); 
 
 static gboolean
 web_page_send_request (WebKitWebPage     *web_page,
@@ -15,10 +16,10 @@ web_page_send_request (WebKitWebPage     *web_page,
     request_uri = webkit_uri_request_get_uri (request);
     page_uri = webkit_web_page_get_uri (web_page);
 
-    g_print("Req uri: %s\n", request_uri);
-    g_print("page uri: %s\n", page_uri);
+//    g_print("Req uri: %s\n", request_uri);
+//    g_print("page uri: %s\n", page_uri);
     bool was_ad = is_ad(request_uri);
-    g_print("was ad: %d\n", was_ad);
+//    g_print("was ad: %d\n", was_ad);
     return was_ad;
 }
 
@@ -41,4 +42,7 @@ webkit_web_extension_initialize (WebKitWebExtension *extension)
     g_signal_connect (extension, "page-created", 
                       G_CALLBACK (web_page_created_callback), 
                       NULL);
+    g_print("init\n");
+    init_ad_list();
+    g_print("done init\n");
 }
