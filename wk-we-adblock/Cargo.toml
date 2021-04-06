@@ -9,6 +9,7 @@ edition = "2018"
 
 [dependencies]
 once_cell = "0.2.3"
+trie-rs = "0.1.1"
 
 [lib]
 crate-type = ["cdylib"]

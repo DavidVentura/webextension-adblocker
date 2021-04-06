@@ -73,3 +73,20 @@ Took 929.147µs
 ```
 
 in debug mode.
+
+and with a trie, in release mode:
+```
+Took 41.879µs
+Took 33.202µs
+Took 37.661µs
+Took 58.4µs
+Took 40.547µs
+Took 37.511µs
+Took 47.739µs
+Took 35.186µs
+Took 45.295µs
+Took 11.842µs
+Took 40.666µs
+Took 35.576µs
+Took 34.604µs
+```
