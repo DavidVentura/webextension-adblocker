@@ -21,13 +21,8 @@ uris are ads or not.
 * https://webkitgtk.org/reference/webkit2gtk/stable/WebKitURIRequest.html
 
 
-
-## Ideas:
-
-* Make impl not disgusting (what's the correct lifetime for the global list?)
-* Reverse all strings and use a trie
-
-
+## Similar things
+* [wyebadblock](https://github.com/jun7/wyebadblock)
 Should block all sub-domains from blocked domains, basically `doubleclick.net` should block `pubads.g.doubleclick.net`.
 
 
