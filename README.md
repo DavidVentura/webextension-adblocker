@@ -13,7 +13,7 @@ Copy-pasted everything from
 I am not confident *at all* writing C - so I'm trying to write the shittiest rust lib to determine whether
 uris are ads or not.
 
-Docs:
+## Docs:
 
 * https://users.rust-lang.org/t/what-is-the-difference-between-dylib-and-cdylib/28847
 * https://docs.rust-embedded.org/book/interoperability/rust-with-c.html
@@ -22,10 +22,54 @@ Docs:
 
 
 
-Ideas:
+## Ideas:
 
 * Make impl not disgusting (what's the correct lifetime for the global list?)
 * Reverse all strings and use a trie
 
 
 Should block all sub-domains from blocked domains, basically `doubleclick.net` should block `pubads.g.doubleclick.net`.
+
+
+## Not-benchmark
+
+The initial dumb for loop without trie takes
+```
+Took 54.412µs
+Took 85.47µs
+Took 75.35µs
+Took 46.748µs
+Took 42.448µs
+Took 75.821µs
+Took 64.25µs
+Took 43µs
+Took 40.867µs
+Took 39.735µs
+Took 43.802µs
+Took 32.691µs
+Took 39.635µs
+Took 42.599µs
+Took 44.693µs
+```
+
+in release mode, and 
+
+```
+Took 559.737µs
+Took 517.137µs
+Took 571.69µs
+Took 554.316µs
+Took 557.162µs
+Took 588.81µs
+Took 483.575µs
+Took 600.725µs
+Took 691.013µs
+Took 694.9µs
+Took 548.886µs
+Took 535.332µs
+Took 442.407µs
+Took 443.119µs
+Took 929.147µs
+```
+
+in debug mode.

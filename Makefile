@@ -7,4 +7,5 @@ webext.so: libwk_we_adblock.so trivial_webext.c
 
 libwk_we_adblock.so: ./wk-we-adblock/src/lib.rs
 	cd wk-we-adblock && cargo build
+	strip ./wk-we-adblock/target/debug/libwk_we_adblock.so
 	cp ./wk-we-adblock/target/debug/libwk_we_adblock.so .
