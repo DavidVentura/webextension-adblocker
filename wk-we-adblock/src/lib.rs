@@ -1,13 +1,11 @@
-use std::cell::RefCell;
+use once_cell::sync::OnceCell;
 use std::ffi::CStr;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::os::raw::c_char;
 use std::time::Instant;
 
-thread_local! {
-    static BAD_DOMAINS: RefCell<Vec<String>> = RefCell::new(vec![]);
-}
+static BAD_DOMAINS: OnceCell<Vec<String>> = OnceCell::new();
 
 #[no_mangle]
 pub extern "C" fn init_ad_list() {
@@ -24,9 +22,7 @@ pub extern "C" fn init_ad_list() {
             data.push(host)
         }
     }
-    // BAD_DOMAINS.with(|x| println!("BAD_DOMAINS {:?}", x.borrow()));
-    BAD_DOMAINS.with(|x| x.replace(data));
-    // BAD_DOMAINS.with(|x| println!("BAD_DOMAINS {:?}", x.borrow()));
+    BAD_DOMAINS.set(data).unwrap();
 }
 #[no_mangle]
 pub extern "C" fn is_ad(page_uri: *const c_char) -> bool {
@@ -45,16 +41,13 @@ pub extern "C" fn is_ad(page_uri: *const c_char) -> bool {
 
     // this disgusting impl takes max 759.181µs
     let mut matched = false;
-    BAD_DOMAINS.with(|x| {
-        let bad_domains = x.borrow();
-        let bbd = bad_domains.iter();
-        for dom in bbd {
-            if domain.ends_with(dom) {
-                matched = true;
-                break;
-            }
+    let bbd = BAD_DOMAINS.get().unwrap();
+    for dom in bbd {
+        if domain.ends_with(dom) {
+            matched = true;
+            break;
         }
-    });
+    }
     if matched {
         println!(
             "Got a BLOCKED page uri in rust: {}, domain is {:?}!",
@@ -65,5 +58,3 @@ pub extern "C" fn is_ad(page_uri: *const c_char) -> bool {
     println!("Took {:?}", done - now);
     matched
 }
-
-//fn is_match(
