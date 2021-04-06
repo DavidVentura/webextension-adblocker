@@ -48,8 +48,9 @@ fn get_domain<'a>(uri: &'a [u8]) -> Option<&'a [u8]> {
             }
         }
         cnt += 1;
-        if cnt > 8 && start_pointer == 0 {
+        if cnt > 7 && start_pointer == 0 {
             // if we haven't found 2 / in 8 chars, no point to keep going
+            // as we only care for the `http://` and `https://` prefixes
             return None;
         }
     }
