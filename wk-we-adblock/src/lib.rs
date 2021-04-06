@@ -30,6 +30,9 @@ pub extern "C" fn init_ad_list() {
     let _res = BAD_DOMAINS.set(trie);
 }
 
+/// Given an uri like http://example.com/something, this will return Some(example.com)
+/// If it can't find two slashes (//) within the first 7 chars (length of `https://`)
+/// it will return None
 fn get_domain<'a>(uri: &'a [u8]) -> Option<&'a [u8]> {
     let mut cnt = 0;
     let mut slash_cnt = 0;
