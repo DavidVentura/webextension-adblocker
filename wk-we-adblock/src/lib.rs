@@ -1,33 +1,53 @@
 use once_cell::sync::OnceCell;
+use std::env;
 use std::ffi::CStr;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::os::raw::c_char;
+use std::path::PathBuf;
 use trie_rs::{Trie, TrieBuilder};
 
 static BAD_DOMAINS: OnceCell<Trie<u8>> = OnceCell::new();
 const ASCII_SLASH: u8 = 47;
-const AD_LIST: &str = "/home/david/git/py-gtk-hn/serverlist.txt";
 
-#[no_mangle]
-pub extern "C" fn init_ad_list() {
-    let mut data = TrieBuilder::new();
+fn hosts_from_file() -> Vec<Vec<u8>> {
+    let mut hosts: Vec<Vec<u8>> = Vec::new();
+    let _home = env::var("HOME");
+    if _home.is_err() {
+        println!("$HOME is not set, not searching for adblock file");
+        return hosts;
+    }
 
-    println!("Doing INIT on ad list");
-    let file = File::open(AD_LIST);
+    let home = PathBuf::from(_home.unwrap());
+    let ad_list = home.join(".config/wk_adblock/hosts.txt");
+    if !ad_list.exists() {
+        println!("Did not find {:?}, not enabling ad block", ad_list);
+        return hosts;
+    }
+
+    let file = File::open(ad_list);
     if file.is_err() {
-        return;
+        println!("Error opening adblock file");
+        return hosts;
     }
     let lines = io::BufReader::new(file.unwrap()).lines();
     for line in lines {
         if let Ok(host) = line {
             let mut s = host.into_bytes();
             s.reverse();
-            data.push(s)
+            hosts.push(s);
         }
     }
+    return hosts;
+}
+#[no_mangle]
+pub extern "C" fn init_ad_list() {
+    let mut data = TrieBuilder::new();
+    let hosts = hosts_from_file();
+    hosts.iter().for_each(|x| data.push(x));
     let trie = data.build();
     let _res = BAD_DOMAINS.set(trie);
+    println!("Blocking {} hosts", hosts.len());
 }
 
 /// Given an uri like http://example.com/something, this will return Some(example.com)
