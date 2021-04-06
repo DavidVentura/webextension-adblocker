@@ -4,6 +4,7 @@ WebKit2 does not expose a direct way to block requests, see
 [here](https://lists.webkit.org/pipermail/webkit-gtk/2013-March/001395.html). 
 You need to build a WebExtension shared object, which it'll load at runtime and *that* can process / reject requests.
 
+This should block all sub-domains from blocked domains, basically `doubleclick.net` should block `pubads.g.doubleclick.net`.
 
 Copy-pasted everything from
 
@@ -23,7 +24,6 @@ uris are ads or not.
 
 ## Similar things
 * [wyebadblock](https://github.com/jun7/wyebadblock)
-Should block all sub-domains from blocked domains, basically `doubleclick.net` should block `pubads.g.doubleclick.net`.
 
 
 ## Not-benchmark
