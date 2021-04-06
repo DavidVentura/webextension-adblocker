@@ -9,7 +9,8 @@ edition = "2018"
 
 [dependencies]
 once_cell = "0.2.3"
-trie-rs = "0.1.1"
+# trie-rs = "0.1.1"
+trie-rs = { git = "https://github.com/davidventura/trie-rs" }
 
 [lib]
 crate-type = ["cdylib"]

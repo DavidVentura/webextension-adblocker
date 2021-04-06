@@ -59,6 +59,12 @@ fn get_domain<'a>(uri: &'a [u8]) -> Option<&'a [u8]> {
     }
     return None;
 }
+fn is_domain_blocked(domain: &[u8]) -> bool {
+    let rd: Vec<u8> = domain.iter().rev().copied().collect();
+
+    let trie = BAD_DOMAINS.get().unwrap();
+    trie.common_prefix_match(rd)
+}
 
 #[no_mangle]
 pub extern "C" fn is_ad(page_uri: *const c_char) -> bool {
@@ -69,13 +75,7 @@ pub extern "C" fn is_ad(page_uri: *const c_char) -> bool {
         return false;
     }
     let domain = domain.unwrap();
-    let rd: Vec<u8> = domain.iter().rev().copied().collect();
-
-    let trie = BAD_DOMAINS.get().unwrap();
-
-    let matches = trie.common_prefix_search(rd);
-
-    let matched = !matches.is_empty();
+    let matched = is_domain_blocked(domain);
     if matched {
         println!("BLOCKED uri {:?}", uri_str);
     }
