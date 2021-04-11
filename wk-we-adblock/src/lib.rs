@@ -100,8 +100,7 @@ fn is_domain_blocked(domain: &[u8]) -> bool {
     trie.common_prefix_match(rd)
 }
 
-#[no_mangle]
-pub extern "C" fn is_ad(page_uri: *const c_char) -> bool {
+fn is_ad(page_uri: *const c_char) -> bool {
     let uri_str = unsafe { CStr::from_ptr(page_uri) };
     let uri_bytes = uri_str.to_bytes();
     let domain = get_domain(uri_bytes);
@@ -168,7 +167,7 @@ extern "C" fn web_page_send_request(
     is_ad(r)
 }
 
-pub unsafe fn g_signal_connect(
+unsafe fn g_signal_connect(
     instance: gpointer,
     detailed_signal: *const gchar,
     c_handler: GCallback,
