@@ -1,11 +1,8 @@
 .PHONY: run
-run: webext.so
+run: libwk_we_adblock.so
 	python3 demo.py
 
-webext.so: libwk_we_adblock.so trivial_webext.c
-	gcc trivial_webext.c -L. -l:libwk_we_adblock.so `pkg-config --cflags --libs gtk+-3.0,webkit2gtk-4.0` -shared -o webext.so
-
 libwk_we_adblock.so: ./wk-we-adblock/src/lib.rs
-	cd wk-we-adblock && cargo build
-	strip ./wk-we-adblock/target/debug/libwk_we_adblock.so
-	cp ./wk-we-adblock/target/debug/libwk_we_adblock.so .
+	cd wk-we-adblock && cargo build --release
+	strip ./wk-we-adblock/target/release/libwk_we_adblock.so
+	cp ./wk-we-adblock/target/release/libwk_we_adblock.so .

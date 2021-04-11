@@ -1,10 +1,18 @@
+#![allow(non_upper_case_globals)]
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+
+use gobject_sys::{g_signal_connect_data, GObject};
 use once_cell::sync::OnceCell;
 use std::env;
-use std::ffi::CStr;
+use std::ffi::{c_void, CStr};
 use std::fs::File;
 use std::io::{self, BufRead};
+use std::mem;
 use std::os::raw::c_char;
 use std::path::PathBuf;
+use std::time::Instant;
 use trie_rs::{Trie, TrieBuilder};
 
 static BAD_DOMAINS: OnceCell<Trie<u8>> = OnceCell::new();
@@ -40,14 +48,20 @@ fn hosts_from_file() -> Vec<Vec<u8>> {
     }
     return hosts;
 }
-#[no_mangle]
-pub extern "C" fn init_ad_list() {
+
+fn init_ad_list() {
+    let start = Instant::now();
     let mut data = TrieBuilder::new();
     let hosts = hosts_from_file();
     hosts.iter().for_each(|x| data.push(x));
     let trie = data.build();
     let _res = BAD_DOMAINS.set(trie);
-    println!("Blocking {} hosts", hosts.len());
+    let finish = Instant::now();
+    println!(
+        "Blocking {} hosts, startup took {:?}",
+        hosts.len(),
+        finish - start
+    );
 }
 
 /// Given an uri like http://example.com/something, this will return Some(example.com)
@@ -95,9 +109,77 @@ pub extern "C" fn is_ad(page_uri: *const c_char) -> bool {
         return false;
     }
     let domain = domain.unwrap();
+    let _start = Instant::now();
     let matched = is_domain_blocked(domain);
     if matched {
         println!("BLOCKED uri {:?}", uri_str);
     }
+    let _done = Instant::now();
+    // println!("{:?}", done - start);
     matched
+}
+
+#[no_mangle]
+extern "C" fn webkit_web_extension_initialize(extension: *mut WebKitWebExtension) {
+    println!("Hey from rust!");
+    unsafe {
+        g_signal_connect(
+            extension as *mut c_void,
+            CStr::from_bytes_with_nul_unchecked(b"page-created\0").as_ptr(),
+            Some(mem::transmute(web_page_created_callback as *const ())),
+            0 as *mut c_void,
+        );
+    };
+    init_ad_list();
+}
+
+#[no_mangle]
+extern "C" fn web_page_created_callback(
+    _extension: *const WebKitWebExtension,
+    web_page: *mut WebKitWebPage,
+    _user_data: *const gpointer,
+) {
+    println!("From webpage created cb");
+    unsafe {
+        g_signal_connect_object(
+            web_page as *mut c_void,
+            CStr::from_bytes_with_nul_unchecked(b"send-request\0").as_ptr(),
+            Some(mem::transmute(web_page_send_request as *const ())),
+            0 as *mut c_void, // NULL
+            0,
+        );
+    }
+}
+
+#[no_mangle]
+extern "C" fn web_page_send_request(
+    _web_page: *mut WebKitWebPage,
+    request: *mut WebKitURIRequest,
+    _redirected_response: *mut WebKitURIResponse,
+    _user_data: *mut gpointer,
+) -> bool {
+    let r = unsafe { webkit_uri_request_get_uri(request) };
+    // This could do 3rd party vs 1st party and URL matching
+    /*
+    let request_uri = unsafe { CStr::from_ptr(webkit_uri_request_get_uri(request)) };
+    let page_uri = unsafe { CStr::from_ptr(webkit_web_page_get_uri(web_page)) };
+    */
+
+    is_ad(r)
+}
+
+pub unsafe fn g_signal_connect(
+    instance: gpointer,
+    detailed_signal: *const gchar,
+    c_handler: GCallback,
+    data: gpointer,
+) -> gulong {
+    g_signal_connect_data(
+        instance as *mut GObject,
+        detailed_signal,
+        c_handler,
+        data,
+        None,
+        std::mem::transmute(0),
+    )
 }
