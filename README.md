@@ -20,6 +20,8 @@ uris are ads or not.
 * https://docs.rust-embedded.org/book/interoperability/rust-with-c.html
 * https://doc.rust-lang.org/std/ffi/struct.CString.html
 * https://webkitgtk.org/reference/webkit2gtk/stable/WebKitURIRequest.html
+* [Generating the bindings from C to rust](https://rust-lang.github.io/rust-bindgen/tutorial-1.html)
+* [pkg-config at build time](https://github.com/rust-lang/pkg-config-rs)
 
 
 ## Similar things
