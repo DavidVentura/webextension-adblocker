@@ -26,6 +26,8 @@ gobject-sys = "0.10.0"
 
 [lib]
 crate-type = ["cdylib", "lib"]
+# Adding lib because of
+# https://github.com/rust-lang/cargo/issues/6659
 
 [profile.release]
 panic = 'abort'
