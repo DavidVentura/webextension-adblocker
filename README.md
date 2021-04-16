@@ -30,4 +30,11 @@ uris are ads or not.
 
 ## Not-benchmark
 
-Randomly clicking on pages for a while, the average time to decide whether or not a page was an ad was ~30µs
+Randomly clicking on pages for a while, the average time to decide whether or not a page was an ad was ~30µs.
+
+
+## Building
+
+```
+sudo apt install llvm clang libwebkit2gtk-4.0 pkg-config libglib2.0-dev
+```

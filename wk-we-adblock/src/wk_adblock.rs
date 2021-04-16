@@ -1,17 +1,15 @@
+use aho_corasick::{AhoCorasick, AhoCorasickBuilder, MatchKind};
 use once_cell::sync::OnceCell;
 use std::env;
-use std::ffi::CStr;
 use std::fs::File;
 use std::io::{self, BufRead};
-use std::os::raw::c_char;
 use std::path::PathBuf;
 use std::time::Instant;
-use trie_rs::{Trie, TrieBuilder};
 
-static BAD_DOMAINS: OnceCell<Trie<u8>> = OnceCell::new();
-const ASCII_SLASH: u8 = 47;
+static BAD_DOMAINS: OnceCell<AhoCorasick> = OnceCell::new();
+static BAD_FRAGMENTS: OnceCell<AhoCorasick> = OnceCell::new();
 
-pub fn hosts_from_file() -> Vec<Vec<u8>> {
+pub fn parse_file(fname: &str) -> Vec<Vec<u8>> {
     let mut hosts: Vec<Vec<u8>> = Vec::new();
     let _home = env::var("HOME");
     if _home.is_err() {
@@ -20,7 +18,7 @@ pub fn hosts_from_file() -> Vec<Vec<u8>> {
     }
 
     let home = PathBuf::from(_home.unwrap());
-    let ad_list = home.join(".config/wk_adblock/hosts.txt");
+    let ad_list = home.join(fname);
     if !ad_list.exists() {
         println!("Did not find {:?}, not enabling ad block", ad_list);
         return hosts;
@@ -34,9 +32,9 @@ pub fn hosts_from_file() -> Vec<Vec<u8>> {
     let lines = io::BufReader::new(file.unwrap()).lines();
     for line in lines {
         if let Ok(host) = line {
-            let mut s = host.into_bytes();
-            s.reverse();
-            hosts.push(s);
+            //let mut s = host.into_bytes();
+            //s.reverse();
+            hosts.push(host.into_bytes());
         }
     }
     return hosts;
@@ -46,70 +44,52 @@ pub fn init_ad_list() {
         println!("Tried to re-init?");
         return;
     }
+
     let start = Instant::now();
-    let mut data = TrieBuilder::new();
-    let hosts = hosts_from_file();
-    hosts.iter().for_each(|x| data.push(x));
-    let trie = data.build();
-    let _res = BAD_DOMAINS.set(trie);
+    let hosts = parse_file(".config/wk_adblock/hosts.txt");
+
+    let host_len = hosts.len();
+    let ac = AhoCorasickBuilder::new()
+        .match_kind(MatchKind::LeftmostFirst)
+        .build(hosts);
+    let _res = BAD_DOMAINS.set(ac);
+
+    let fragments = parse_file(".config/wk_adblock/fragments.txt");
+    let frag_len = fragments.len();
+    let fragment_matcher = AhoCorasickBuilder::new()
+        .match_kind(MatchKind::LeftmostFirst)
+        .build(fragments);
+    BAD_FRAGMENTS.set(fragment_matcher).unwrap();
+
     let finish = Instant::now();
     println!(
-        "Blocking {} hosts, startup took {:?}",
-        hosts.len(),
+        "Blocking {} hosts and {} fragments, startup took {:?}",
+        host_len,
+        frag_len,
         finish - start
     );
 }
 
-/// Given an uri like http://example.com/something, this will return Some(example.com)
-/// If it can't find two slashes (//) within the first 7 chars (length of `https://`)
-/// it will return None
-fn get_domain<'a>(uri: &'a [u8]) -> Option<&'a [u8]> {
-    let mut cnt = 0;
-    let mut slash_cnt = 0;
-    let mut start_pointer = 0;
-    let end_pointer;
-
-    for elem in uri.iter() {
-        if *elem == ASCII_SLASH {
-            slash_cnt += 1;
-            if slash_cnt == 2 {
-                start_pointer = cnt;
-            }
-            if slash_cnt == 3 {
-                end_pointer = cnt;
-                return Some(&uri[start_pointer + 1..end_pointer]);
-            }
-        }
-        cnt += 1;
-        if cnt > 7 && start_pointer == 0 {
-            // if we haven't found 2 / in 8 chars, no point to keep going
-            // as we only care for the `http://` and `https://` prefixes
-            return None;
+pub fn is_ad(page_uri: &[u8]) -> bool {
+    let start = Instant::now();
+    let domain_matcher = BAD_DOMAINS.get().unwrap();
+    let matched;
+    if domain_matcher.earliest_find(page_uri).is_some() {
+        matched = true;
+    } else {
+        let fragment_matcher = BAD_FRAGMENTS.get().unwrap();
+        let frag = fragment_matcher.earliest_find(page_uri);
+        if frag.is_some() {
+            //println!("fragment! {:?}", frag);
+            matched = true;
+        } else {
+            matched = false;
         }
     }
-    return None;
-}
-pub fn is_domain_blocked<T: Ord + Copy>(domain: &[T], trie: &Trie<T>) -> bool {
-    let rd: Vec<T> = domain.iter().rev().copied().collect();
-    trie.common_prefix_match(rd)
-}
-
-pub fn is_ad(page_uri: *const c_char) -> bool {
-    let uri_str = unsafe { CStr::from_ptr(page_uri) };
-    let uri_bytes = uri_str.to_bytes();
-    let domain = get_domain(uri_bytes);
-    if domain.is_none() {
-        return false;
-    }
-    let domain = domain.unwrap();
-    let _start = Instant::now();
-
-    let trie = BAD_DOMAINS.get().unwrap();
-    let matched = is_domain_blocked(domain, trie);
+    let finish = Instant::now();
     if matched {
-        println!("BLOCKED uri {:?}", uri_str);
+        println!("BLOCKED uri {:?}", String::from_utf8_lossy(page_uri));
+        println!("In {:?}", finish - start);
     }
-    let _done = Instant::now();
-    // println!("{:?}", done - start);
     matched
 }

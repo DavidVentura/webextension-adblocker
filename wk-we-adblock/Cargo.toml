@@ -12,6 +12,8 @@ pkg-config = "0.3.19"
 
 [dev-dependencies]
 criterion = "0.3.4"
+trie-rs = { git = "https://github.com/davidventura/trie-rs" }
+twoway = "0.2.1"
 
 [[bench]]
 name = "bench"
@@ -20,9 +22,8 @@ path = "benches/bench.rs"
 
 [dependencies]
 once_cell = "0.2.3"
-# trie-rs = "0.1.1"
-trie-rs = { git = "https://github.com/davidventura/trie-rs" }
 gobject-sys = "0.10.0"
+aho-corasick = "0.7"
 
 [lib]
 crate-type = ["cdylib", "lib"]

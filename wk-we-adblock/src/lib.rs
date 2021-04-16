@@ -48,14 +48,16 @@ extern "C" fn web_page_send_request(
     _redirected_response: *mut WebKitURIResponse,
     _user_data: *mut gpointer,
 ) -> bool {
-    let r = unsafe { webkit_uri_request_get_uri(request) };
+    let page_uri = unsafe { webkit_uri_request_get_uri(request) };
     // This could do 3rd party vs 1st party and URL matching
     /*
     let request_uri = unsafe { CStr::from_ptr(webkit_uri_request_get_uri(request)) };
     let page_uri = unsafe { CStr::from_ptr(webkit_web_page_get_uri(web_page)) };
     */
 
-    wk_adblock::is_ad(r)
+    let uri_str = unsafe { CStr::from_ptr(page_uri) };
+    let uri_bytes = uri_str.to_bytes();
+    wk_adblock::is_ad(uri_bytes)
 }
 
 unsafe fn g_signal_connect(
