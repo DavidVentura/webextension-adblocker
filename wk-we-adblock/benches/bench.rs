@@ -80,7 +80,7 @@ fn bench_hosts_trie_corasick(c: &mut Criterion) {
         .build(&b_lines);
 
     let mut group = c.benchmark_group("Trie u8 vs Trie str vs aho-corasick");
-    group.warm_up_time(Duration::from_secs(5));
+    group.measurement_time(Duration::from_secs(10));
     group.bench_function(BenchmarkId::new("Bytes", 1), |b| {
         b.iter(|| trie_u8.common_prefix_match(&sentinel_u8_rev))
     });
@@ -130,7 +130,7 @@ fn bench_fragment_substr_corasick_twoway(c: &mut Criterion) {
         .build(&b_lines);
 
     let mut group = c.benchmark_group("fragment comparison");
-    group.warm_up_time(Duration::from_secs(5));
+    group.measurement_time(Duration::from_secs(10));
 
     assert!(window_match(
         &vec!["/xmr-monero.js".as_bytes().to_vec()],
