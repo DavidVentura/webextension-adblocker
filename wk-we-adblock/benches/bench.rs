@@ -3,6 +3,7 @@ use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use std::env;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use std::time::Duration;
 use trie_rs::{Trie, TrieBuilder};
 use twoway;
 
@@ -55,35 +56,7 @@ fn bytes_trie() -> Trie<u8> {
     builder.build()
 }
 
-fn bench_str_vec(c: &mut Criterion) {
-    let trie = str_trie();
-
-    let sentinel = vec![
-        "com".to_string().into_bytes(),
-        "yourdictionary".to_string().into_bytes(),
-        "adjuggler".to_string().into_bytes(),
-    ];
-
-    let res = trie.common_prefix_match(&sentinel);
-    assert_eq!(res, true);
-    c.bench_function("vec of vecs match", |b| {
-        b.iter(|| trie.common_prefix_match(&sentinel));
-    });
-}
-
-fn bench_u8_vec(c: &mut Criterion) {
-    let trie_u8 = bytes_trie();
-    //let sentinel: &[u8] = "adjuggler.yourdictionary.com".as_bytes();
-    let sentinel: &[u8] = "moc.yranoitcidruoy.relggujda".as_bytes();
-    let res = trie_u8.common_prefix_match(&sentinel);
-    assert_eq!(res, true);
-
-    c.bench_function("direct match", |b| {
-        b.iter(|| trie_u8.common_prefix_match(&sentinel));
-    });
-}
-
-fn bench_u8_vec_vs_str(c: &mut Criterion) {
+fn bench_hosts_trie_corasick(c: &mut Criterion) {
     // vec of bytes
     let trie_u8 = bytes_trie();
     let sentinel_u8: &[u8] = "adjuggler.yourdictionary.com".as_bytes();
@@ -106,7 +79,8 @@ fn bench_u8_vec_vs_str(c: &mut Criterion) {
         .match_kind(MatchKind::LeftmostFirst)
         .build(&b_lines);
 
-    let mut group = c.benchmark_group("bytes vs str");
+    let mut group = c.benchmark_group("Trie u8 vs Trie str vs aho-corasick");
+    group.warm_up_time(Duration::from_secs(5));
     group.bench_function(BenchmarkId::new("Bytes", 1), |b| {
         b.iter(|| trie_u8.common_prefix_match(&sentinel_u8_rev))
     });
@@ -141,7 +115,7 @@ fn window_match(lines: &Vec<Vec<u8>>, validate: &[u8]) -> bool {
     return false;
 }
 
-fn bench_trivial_substr_vs_twoway(c: &mut Criterion) {
+fn bench_fragment_substr_corasick_twoway(c: &mut Criterion) {
     let lines = get_lines("url_fragments.txt");
     let b_lines = get_b_lines("url_fragments.txt");
     let sentinel_url = "https://ultra-dody.ru/xmr-monero.js";
@@ -155,18 +129,13 @@ fn bench_trivial_substr_vs_twoway(c: &mut Criterion) {
         .match_kind(MatchKind::LeftmostFirst)
         .build(&b_lines);
 
-    let mut group = c.benchmark_group("substr find vs twoway");
+    let mut group = c.benchmark_group("fragment comparison");
+    group.warm_up_time(Duration::from_secs(5));
 
-    /*
-    assert!(!window_match(
-        &vec!["/qqq-monero.js".as_bytes().to_vec()],
-        b_sentinel_url
-    ),);
     assert!(window_match(
-        &vec!["/iicons".as_bytes().to_vec()],
-        b_sentinel_url
-    ),);
-    */
+        &vec!["/xmr-monero.js".as_bytes().to_vec()],
+        "https://ultra-dody.ru/xmr-monero.js".as_bytes()
+    ));
 
     group.bench_with_input(BenchmarkId::new("Substr bytes", 1), &b_lines, |b, lines| {
         b.iter(|| window_match(lines, b_sentinel_url))
@@ -197,7 +166,7 @@ fn bench_trivial_substr_vs_twoway(c: &mut Criterion) {
             return false;
         })
     });
-    group.bench_function(BenchmarkId::new("twoway", 1), |b| {
+    group.bench_function(BenchmarkId::new("twoway u8", 1), |b| {
         b.iter(|| {
             for bad_substr in &lines {
                 if bad_substr.len() > sentinel_url.len() {
@@ -222,9 +191,7 @@ fn bench_trivial_substr_vs_twoway(c: &mut Criterion) {
 }
 criterion_group!(
     benches,
-    bench_str_vec,
-    bench_u8_vec,
-    bench_u8_vec_vs_str,
-    bench_trivial_substr_vs_twoway
+    bench_fragment_substr_corasick_twoway,
+    bench_hosts_trie_corasick
 );
 criterion_main!(benches);
