@@ -38,11 +38,8 @@ fn main() {
         .whitelist_type("gpointer")
         .whitelist_type("WebKitWebExtension")
         .header("wrapper.h")
-        .clang_arg("-Wl,-s")
         .clang_args(webkit_pathed)
         .clang_args(gtk_pathed)
-        .clang_args(webkit2gtk.libs)
-        .clang_args(gtk.libs)
         // Tell cargo to invalidate the built crate whenever any of the
         // included header files changed.
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
