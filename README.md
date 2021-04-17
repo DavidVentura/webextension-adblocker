@@ -4,7 +4,7 @@ This is an ad-blocker for WebKit2 based browsers.
 
 ## What does it do
 
-This should block all sub-domains from blocked domains, basically `doubleclick.net` should block `pubads.g.doubleclick.net`.
+This extension will block all "bad requests" towards blocked domains or matching "bad url fragments".
 
 ## Building
 
