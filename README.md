@@ -6,13 +6,6 @@ This is an ad-blocker for WebKit2 based browsers.
 
 This extension will block all "bad requests" towards blocked domains or matching "bad url fragments".
 
-## Building
-
-```
-sudo apt install llvm clang libwebkit2gtk-4.0 pkg-config libglib2.0-dev
-cargo build --release
-```
-
 ## How to use it
 
 ### Blocking domains
@@ -51,6 +44,13 @@ Copy-pasted everything from
 * https://blogs.igalia.com/carlosgc/2013/09/10/webkit2gtk-web-process-extensions/
 * https://github.com/aperezdc/webkit2gtk-python-webextension-example/blob/master/browse-with-extension
 
+
+## Building
+
+```
+sudo apt install llvm clang libwebkit2gtk-4.0 pkg-config libglib2.0-dev
+cargo build --release
+```
 
 ## Docs:
 
